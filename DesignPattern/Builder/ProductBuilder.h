@@ -251,5 +251,5 @@ public:
 // 创建的多个产品实例，可以用 ToolBox/GeneralContainer 来管理。
 // 创建多个不同设置的产品实例之后，统一调用 makeSettingsAvailable() 使批量设置生效。
 
-// 或者 直接改造 ProductBuilder 类，内置 ToolBox/GeneralContainer，更名为 ProductContainer
+// 或者 直接改造 ProductBuilder 类，内置 ToolBox/GeneralContainer（暂未开源），更名为 ProductContainer
 // 直接进行创建和管理多个产品实例。
