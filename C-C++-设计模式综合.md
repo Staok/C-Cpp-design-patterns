@@ -2,6 +2,10 @@
 
 
 
+自己的设计模式的理解和总结：`DesignPattern` 目录下的 `DesignPattern.md`。
+
+
+
 ## 设计模式目录
 
 都是好文！
@@ -33,14 +37,15 @@
 
 More:
 
-同目录的 `设计模式介绍-仓库` 文件里里面有 离线了 一些优秀仓库。
+- 同目录的 `设计模式介绍-仓库` 文件里里面有 离线了 一些优秀仓库。
 
-[Staok/Cpp-Learning (github.com)](https://github.com/Staok/Cpp-Learning) 里面的《C++学习总结备查》一文中的 `C++ 精品汇总`、`C++精品仓库` 之类的小节有更多网络优秀总结。
+- [Staok/Cpp-Learning (github.com)](https://github.com/Staok/Cpp-Learning) 里面的《C++学习总结备查》一文中的 `C++ 精品汇总`、`C++精品仓库` 之类的小节有更多网络优秀总结。
 
 
 
 ## 重构的艺术
 
 - [重构指北——《重构，改善既有代码设计》精读本文总结自笔者的开发经验以及 Martin Fowler 的《重构，改善既有代 - 掘金 (juejin.cn)](https://juejin.cn/post/6996990620233383967)。
+- [Introduction · 重构-改善既有代码的设计（笔记） (gitbooks.io)](https://zacharychang.gitbooks.io/refactoring-improving-the-design-of-existing-code/content/)。
 - [《重构:改善既有代码的设计》读书笔记 (cnblogs.com)](https://www.cnblogs.com/wmyskxz/p/10990059.html)。
 - [Refactoring: clean your code (refactoringguru.cn)](https://refactoringguru.cn/refactoring)。
