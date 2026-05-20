@@ -1,5 +1,6 @@
-#include "Singleton.h"
 #include <iostream>
+
+#include "Singleton.h"
 
 Singleton& Singleton::getInst() {
     // 静态局部变量，第一次调用时初始化，程序结束时销毁

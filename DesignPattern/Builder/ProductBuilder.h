@@ -11,9 +11,12 @@
 //    < 0 表示失败
 //    > 0 表示警告
 
+// 注意这个模板里面的类的公共 API 没有提供 线程安全措施，按需添加
+
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <cmath>
 #include <memory>
 #include <string>
 
@@ -25,7 +28,7 @@ public:
     virtual ~ObjectBasic() = default;
 
 protected:
-    size_t mId;
+    size_t mId = 0;
     // ...
 };
 
@@ -57,6 +60,7 @@ struct ProductSettings {
     // 重置，赋值运算符，等号运算符，等
 
     void reset() {
+        // 重置为默认值，或者根据需要设置为某个特定的值
         partA = 0;
         partB = 0.0;
         partC.clear();
@@ -64,20 +68,14 @@ struct ProductSettings {
     }
 
     bool operator==(const ProductSettings& other) const {
+        constexpr double epsilon = 1e-9;
         return ( ( partA == other.partA ) &&
-                 ( partB == other.partB ) &&
+                 // for double comparison, consider using an epsilon for floating-point comparison
+                 ( std::fabs(partB - other.partB) < epsilon ) &&
                  ( partC == other.partC ) );
                  // ...
     }
 };
-
-#define HANDLE_ISUNCHANGED(settingVar, newValue, changedExec, noChangeExec) \
-    if (!(settingVar == newValue)) {    \
-        settingVar = newValue;          \
-        changedExec                     \
-    } else {                            \
-        noChangeExec                    \
-    }
 
 #define HANDLE_RET(ret, fun, retIs0ThanExec, retSmallThanExec, retLargerThanExec) \
     ret = fun;                  \
@@ -91,25 +89,27 @@ struct ProductSettings {
 
 #define SET_GET_PART_IMPL(funPartName, varPartName, partType, updateFunc, printFunc) \
     virtual int32_t set##funPartName(const partType& value) {  \
-        HANDLE_ISUNCHANGED(                             \
-            varPartName, value,                         \
+        if (!(varPartName == value)) {                  \
+            auto oldVal_ = varPartName;                 \
+            varPartName = value;                        \
             int ret = -1;                               \
             HANDLE_RET(                                 \
                 ret , updateFunc ,                      \
                 return 0; ,                             \
                 printFunc(#updateFunc " failed, ret=%d\n", ret); \
+                varPartName = oldVal_;                  \
                 return ret; ,                            \
                 printFunc(#updateFunc " warning, ret=%d\n", ret); \
                 return ret;                             \
-            ),                                          \
-            return 0;                                   \
-        );                                              \
+            )                                           \
+        }                                               \
+        return 0;                                       \
     }                                                   \
     virtual partType get##funPartName() const {                 \
         return varPartName;                             \
     }
 
-class ProductBasic : ObjectBasic {
+class ProductBasic : public ObjectBasic {
 public:
     ProductBasic() = default;
     virtual ~ProductBasic() = default;
@@ -134,34 +134,38 @@ public:
     virtual int32_t makeSettingsAvailable() {
 
         int32_t ret = -1;
+        int32_t warnCount = 0;
 
         HANDLE_RET(
             ret , updatePartA() ,
-            return 0; ,
+            ,
             printf("updatePartA() failed, ret=%d\n", ret);
             return ret; ,
             printf("updatePartA() warning, ret=%d\n", ret);
-            return ret; );
+            warnCount++;
+            );
 
         HANDLE_RET(
             ret , updatePartB() ,
-            return 0; ,
+            ,
             printf("updatePartB() failed, ret=%d\n", ret);
             return -1; ,
             printf("updatePartB() warning, ret=%d\n", ret);
-            return 1; );
+            warnCount++;
+            );
 
         HANDLE_RET(
             ret , updatePartC() ,
-            return 0; ,
+            ,
             printf("updatePartC() failed, ret=%d\n", ret);
             return -1; ,
             printf("updatePartC() warning, ret=%d\n", ret);
-            return 1; );
+            warnCount++;
+            );
 
         // ...
 
-        return 0;
+        return warnCount > 0 ? 1 : 0;
     }
 
     // 一些公共的纯虚函数接口，由具体产品类实现
@@ -178,7 +182,7 @@ protected:
     // ...
 };
 
-class ProductNextBasic : ObjectBasic {
+class ProductNextBasic : public ObjectBasic {
     // ...
 };
 
@@ -296,3 +300,6 @@ public:
 // 创建的多个产品实例，可以用 ToolBox/GeneralContainer（暂未开源） 来管理。
 //    简单的就用 std::vector 之类的容器 添加到 ProductBuilder 类里面 进行管理。
 // 创建多个不同设置的产品实例之后，统一调用 makeSettingsAvailable() 使批量设置生效（重要）。
+
+#undef HANDLE_RET
+#undef SET_GET_PART_IMPL

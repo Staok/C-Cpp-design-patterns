@@ -29,6 +29,9 @@ MyInterface::MyInterface()
 
 MyInterface::~MyInterface() = default;
 
+MyInterface::MyInterface(MyInterface&&) noexcept = default;
+MyInterface& MyInterface::operator=(MyInterface&&) noexcept = default;
+
 int MyInterface::publicApi1() { return mImpl->publicApi1(); }
 
 int MyInterface::publicApi2() { return mImpl->publicApi2(); }
