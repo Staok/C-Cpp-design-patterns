@@ -18,9 +18,13 @@ int GenericModuleImpl::Init() {
     // 原子状态转换：仅当当前为 Uninitialized 时才能进入 Initializing
     // 若已是 Initialized/Initializing/Deinitializing，直接返回，天然防重入
     ModuleState expected = ModuleState::Uninitialized;
-    if (!mState.compare_exchange_strong(expected, ModuleState::Initializing)) {
-        // 非 Uninitialized 状态，说明已初始化或正在操作中
-        return (expected == ModuleState::Initialized) ? 0 : -1;
+    if (!mInitState.compare_exchange_strong(expected, ModuleState::Initializing)) {
+        if (expected == ModuleState::Initialized) {
+            std::cerr << "Module is already initialized!" << std::endl;
+            return 0;
+        }
+        std::cerr << "Module is initializing or deinitializing, skipping init" << std::endl;
+        return -1;
     }
 
     std::unique_lock<std::shared_mutex> writeLock(mMutex);
@@ -33,7 +37,7 @@ int GenericModuleImpl::Init() {
     //   return -1;
     //
 
-    mState.store(ModuleState::Initialized);
+    mInitState.store(ModuleState::Initialized);
     return 0;
 }
 
@@ -41,9 +45,13 @@ int GenericModuleImpl::Init() {
 int GenericModuleImpl::Deinit() {
     // 原子状态转换：仅当当前为 Initialized 时才能进入 Deinitializing
     ModuleState expected = ModuleState::Initialized;
-    if (!mState.compare_exchange_strong(expected, ModuleState::Deinitializing)) {
-        // 非 Initialized 状态，无需操作
-        return 0;
+    if (!mInitState.compare_exchange_strong(expected, ModuleState::Deinitializing)) {
+        if (expected == ModuleState::Uninitialized) {
+            std::cerr << "Module is already deinitialized!" << std::endl;
+            return 0;
+        }
+        std::cerr << "Module is initializing or deinitializing, skipping deinit" << std::endl;
+        return -1;
     }
 
     std::unique_lock<std::shared_mutex> writeLock(mMutex);
@@ -52,14 +60,14 @@ int GenericModuleImpl::Deinit() {
     // TODO: 回收资源，取消订阅回调，关闭线程等
     //
 
-    mState.store(ModuleState::Uninitialized);
+    mInitState.store(ModuleState::Uninitialized);
     return 0;
 }
 
 // 具体业务任务
 void GenericModuleImpl::DoTask() {
     // 无锁快速路径：只有 Initialized 状态才执行业务
-    if (mState.load() != ModuleState::Initialized) {
+    if (mInitState.load() != ModuleState::Initialized) {
         std::cerr << "Module is not initialized!" << std::endl;
         return;
     }

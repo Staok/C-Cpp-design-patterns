@@ -38,10 +38,11 @@ public:
 
 private:
     // 模块生命周期状态，原子操作保证线程安全的状态转换
-    std::atomic<ModuleState> mState{ModuleState::Uninitialized};
+    std::atomic<ModuleState> mInitState{ModuleState::Uninitialized};
 
     // 读写锁，供 Init/Deinit/DoTask 内部业务逻辑按需使用
     mutable std::shared_mutex mMutex;
+    // 也可以改为 使用 std::recursive_mutex，如果 Init/Deinit/DoTask 内部可能会有递归调用的情况
 
     // 这里可以放置只在此实现类中用的其他成员或外部依赖，比如：
     // std::shared_ptr<SomeExternalDep> external_dep;
